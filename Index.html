@@ -152,6 +152,7 @@ nav.tabs button.active{
 /* ---------- Mesa de ruleta ---------- */
 .table-scroll{overflow-x:auto;padding-bottom:6px;margin:6px 0 0}
 .roulette-table{
+  position:relative;
   display:grid;
   grid-template-columns:46px repeat(12,minmax(40px,1fr)) 58px;
   grid-template-rows:repeat(3,52px) 42px 42px;
@@ -184,6 +185,24 @@ nav.tabs button.active{
   box-shadow:0 2px 6px rgba(0,0,0,.5);border:1px solid #fff6d8;
 }
 .cell.has-bet{box-shadow:0 0 0 2px var(--gold-bright),0 0 14px rgba(240,210,122,.35)}
+
+/* ---------- Puntos de apuesta dividida (split bets) ---------- */
+.split-dot{
+  position:relative;
+  width:14px;height:14px;border-radius:50%;
+  background:radial-gradient(circle at 30% 25%, var(--gold-bright), var(--gold));
+  border:2px solid var(--gold-dim);
+  cursor:pointer;z-index:6;
+  box-shadow:0 0 6px rgba(0,0,0,.5);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.split-dot:hover{ transform:scale(1.5); box-shadow:0 0 0 2px var(--gold-bright); }
+/* dots horizontales: viven entre dos columnas, pegados al borde derecho de la celda izquierda */
+.split-dot.h{ align-self:center; justify-self:end; margin-right:-9px; }
+/* dots verticales: viven entre dos filas, pegados al borde inferior de la celda superior */
+.split-dot.v{ align-self:end; justify-self:center; margin-bottom:-9px; }
+.split-dot.has-bet{ box-shadow:0 0 0 2px var(--gold-bright), 0 0 14px rgba(240,210,122,.45); }
+.split-dot .stake-badge{ top:-16px; right:-14px; }
 
 .bet-summary{
   display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;
@@ -350,7 +369,7 @@ table.data tr:hover td{background:rgba(255,255,255,.02)}
   <div class="panel">
     <p class="eyebrow">Paso 2 — Mesa europea (0–36)</p>
     <h2>🟢 Coloca tus apuestas</h2>
-    <p class="sub">Clic = añadir ficha activa. Clic en la insignia dorada de una casilla = quitar esa apuesta.</p>
+    <p class="sub">Clic en un número = apuesta directa (35:1). Clic en un <b>punto dorado</b> entre dos números = apuesta dividida / <i>split</i> (17:1). Clic en la insignia dorada de una apuesta existente = quitarla.</p>
     <div class="table-scroll">
       <div class="roulette-table" id="table"></div>
     </div>
@@ -500,12 +519,24 @@ const MARKETS = {
 // Números exactos: id "n0".."n36", pago 35:1
 function isStraight(id){ return /^n([0-9]|[12][0-9]|3[0-6])$/.test(id); }
 function straightNum(id){ return parseInt(id.slice(1),10); }
+
+// Apuestas divididas (split): id "sp_A-B" con A<B, dos números adyacentes, pago 17:1
+function isSplit(id){ return typeof id==="string" && id.indexOf("sp_")===0; }
+function splitNums(id){ return id.slice(3).split("-").map(Number); }
+
 function marketWin(id,n){
+  if(isSplit(id)){ const [a,b]=splitNums(id); return n===a || n===b; }
   if(isStraight(id)) return straightNum(id)===n;
   return MARKETS[id].win(n);
 }
-function marketRatio(id){ return isStraight(id) ? 35 : MARKETS[id].ratio; }
-function marketLabel(id){ return isStraight(id) ? ("Nº "+straightNum(id)) : MARKETS[id].label; }
+function marketRatio(id){
+  if(isSplit(id)) return 17;
+  return isStraight(id) ? 35 : MARKETS[id].ratio;
+}
+function marketLabel(id){
+  if(isSplit(id)){ const [a,b]=splitNums(id); return "Split "+a+"/"+b; }
+  return isStraight(id) ? ("Nº "+straightNum(id)) : MARKETS[id].label;
+}
 
 /* ===================================================================
    2. ESTADO GLOBAL
@@ -601,6 +632,46 @@ function buildTable(){
     cb.style.gridColumn=14; cb.style.gridRow=(r+1);
     t.appendChild(cb);
   }
+
+  // ---- Puntos de apuesta dividida (split): dos números adyacentes, pago 17:1 ----
+  // Mapeo de número -> columna/fila de grid según la disposición de arriba.
+  // Para un número n (1..36): columna = 2 + floor((n-1)/3) ; fila = 3 - ((n-1)%3)
+  const numCol = n => 2 + Math.floor((n-1)/3);
+  const numRow = n => 3 - ((n-1)%3);
+
+  function addSplit(a,b,gridCol,gridRow,horiz){
+    const id = "sp_"+Math.min(a,b)+"-"+Math.max(a,b);
+    const dot=document.createElement("div");
+    dot.className="split-dot"+(horiz?" h":" v");
+    dot.dataset.id=id;
+    dot.title="Split "+Math.min(a,b)+"/"+Math.max(a,b)+" (17:1)";
+    dot.style.gridColumn=gridCol;
+    dot.style.gridRow=gridRow;
+    dot.onclick=(e)=>{
+      e.stopPropagation();
+      if(e.target.classList.contains("stake-badge")){ delete state.stakes[id]; afterBetChange(); return; }
+      state.stakes[id]=(state.stakes[id]||0)+state.activeChip;
+      afterBetChange();
+    };
+    t.appendChild(dot);
+  }
+
+  // Horizontales: une n con n+1 cuando ambos están en la misma fila (no cruza de columna de docena visual,
+  // solo evita unir el final de una columna del grid con el inicio de la siguiente fila lógica: n%3!==0)
+  for(let n=1;n<=35;n++){
+    if(n%3!==0){
+      addSplit(n,n+1, numCol(n), numRow(n), true);
+    }
+  }
+  // Verticales: une n con n+3 (misma columna del grid, filas contiguas)
+  for(let n=1;n<=33;n++){
+    addSplit(n,n+3, numCol(n), numRow(n)+" / span 2", false);
+  }
+  // Splits contra el 0 (0 ocupa columna 1, filas 1 a 3)
+  addSplit(0,1, 2, 3, false); // 0 con el 1 (fila inferior, col 2)
+  addSplit(0,2, 2, 2, false); // 0 con el 2 (fila media, col 2)
+  addSplit(0,3, 2, 1, false); // 0 con el 3 (fila superior, col 2)
+
   // Docenas (fila 4)
   const dz=[["d1","1ª Docena"],["d2","2ª Docena"],["d3","3ª Docena"]];
   dz.forEach((d,i)=>{
@@ -632,7 +703,7 @@ function makeCell(id,label,cls){
   return d;
 }
 function refreshBadges(){
-  $$("#table .cell").forEach(cell=>{
+  $$("#table .cell, #table .split-dot").forEach(cell=>{
     const id=cell.dataset.id;
     const old=cell.querySelector(".stake-badge");
     if(old) old.remove();
@@ -1072,8 +1143,8 @@ function analyze(stakes){
   let sum=0; for(let n=0;n<=36;n++) sum+=net[n];
   const evPerSpin=sum/37;
   const evPct = stake>0 ? evPerSpin/stake : 0;     // ≈ -0.0270 para ruleta europea
-  // exposición a números exactos (alta varianza)
-  let straightStake=0; ids.forEach(id=>{ if(isStraight(id)) straightStake+=stakes[id]; });
+  // exposición a números exactos / splits (alta varianza)
+  let straightStake=0; ids.forEach(id=>{ if(isStraight(id) || isSplit(id)) straightStake+=stakes[id]; });
   const straightFrac = stake>0 ? straightStake/stake : 0;
   // pérdida y ganancia extremas en un giro
   let maxWin=-Infinity,maxLoss=Infinity;
@@ -1108,7 +1179,7 @@ function renderIA(){
   let parts=[];
   parts.push(`Cubres <b>${a.covered} de 37</b> números (<b>${pct(a.covFrac)}</b>) con un total de ${money(a.stake)} por giro.`);
   if(a.straightFrac>0.5){
-    parts.push(`Apuestas fuertemente a números exactos (pago 35:1): es una estrategia de <b>alta volatilidad</b> — muchas pérdidas pequeñas a cambio de premios grandes y poco frecuentes.`);
+    parts.push(`Apuestas fuertemente a números exactos o splits (pago 35:1 / 17:1): es una estrategia de <b>alta volatilidad</b> — muchas pérdidas pequeñas a cambio de premios grandes y poco frecuentes.`);
   } else if(a.covFrac>=0.7){
     parts.push(`La amplia cobertura reduce la frecuencia de pérdidas totales, pero también reduce el premio por acierto: el balance tiende a moverse despacio.`);
   } else if(a.covFrac>=0.45){
