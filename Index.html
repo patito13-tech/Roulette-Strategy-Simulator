@@ -186,23 +186,47 @@ nav.tabs button.active{
 }
 .cell.has-bet{box-shadow:0 0 0 2px var(--gold-bright),0 0 14px rgba(240,210,122,.35)}
 
-/* ---------- Puntos de apuesta dividida (split bets) ---------- */
-.split-dot{
+/* ---------- Zonas de apuesta dividida (split bets) ----------
+   Franjas delgadas, casi invisibles, ancladas al borde entre dos
+   números (igual que en una mesa real). No estorban el clic sobre
+   el número: son finas y viven exactamente sobre la línea divisoria. */
+.split-zone{
   position:relative;
-  width:14px;height:14px;border-radius:50%;
-  background:radial-gradient(circle at 30% 25%, var(--gold-bright), var(--gold));
-  border:2px solid var(--gold-dim);
-  cursor:pointer;z-index:6;
-  box-shadow:0 0 6px rgba(0,0,0,.5);
-  transition:transform .12s ease, box-shadow .12s ease;
+  z-index:7;
+  cursor:pointer;
+  background:transparent;
+  border-radius:3px;
+  pointer-events:auto;
+  transition:background .12s ease, box-shadow .12s ease;
+  align-self:center;
+  justify-self:center;
 }
-.split-dot:hover{ transform:scale(1.5); box-shadow:0 0 0 2px var(--gold-bright); }
-/* dots horizontales: viven entre dos columnas, pegados al borde derecho de la celda izquierda */
-.split-dot.h{ align-self:center; justify-self:end; margin-right:-9px; }
-/* dots verticales: viven entre dos filas, pegados al borde inferior de la celda superior */
-.split-dot.v{ align-self:end; justify-self:center; margin-bottom:-9px; }
-.split-dot.has-bet{ box-shadow:0 0 0 2px var(--gold-bright), 0 0 14px rgba(240,210,122,.45); }
-.split-dot .stake-badge{ top:-16px; right:-14px; }
+.split-zone:hover{
+  background:rgba(240,210,122,.45);
+  box-shadow:0 0 8px rgba(240,210,122,.6);
+}
+.split-zone.has-bet{
+  background:rgba(240,210,122,.28);
+  box-shadow:0 0 0 1px var(--gold-bright) inset;
+}
+/* horizontal: franja vertical fina pegada al borde derecho de la celda izquierda */
+.split-zone.h{
+  width:10px;height:70%;
+  justify-self:end; align-self:center;
+  margin-right:-7px;
+}
+/* vertical: franja horizontal fina pegada al borde inferior de la celda superior */
+.split-zone.v{
+  height:10px;width:70%;
+  align-self:end; justify-self:center;
+  margin-bottom:-7px;
+}
+.split-zone .stake-badge{
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  min-width:18px;height:18px;font-size:9.5px;
+  white-space:nowrap;padding:0 4px;
+}
 
 .bet-summary{
   display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;
@@ -641,19 +665,19 @@ function buildTable(){
 
   function addSplit(a,b,gridCol,gridRow,horiz){
     const id = "sp_"+Math.min(a,b)+"-"+Math.max(a,b);
-    const dot=document.createElement("div");
-    dot.className="split-dot"+(horiz?" h":" v");
-    dot.dataset.id=id;
-    dot.title="Split "+Math.min(a,b)+"/"+Math.max(a,b)+" (17:1)";
-    dot.style.gridColumn=gridCol;
-    dot.style.gridRow=gridRow;
-    dot.onclick=(e)=>{
+    const zone=document.createElement("div");
+    zone.className="split-zone"+(horiz?" h":" v");
+    zone.dataset.id=id;
+    zone.title="Split "+Math.min(a,b)+"/"+Math.max(a,b)+" (17:1)";
+    zone.style.gridColumn=gridCol;
+    zone.style.gridRow=gridRow;
+    zone.onclick=(e)=>{
       e.stopPropagation();
       if(e.target.classList.contains("stake-badge")){ delete state.stakes[id]; afterBetChange(); return; }
       state.stakes[id]=(state.stakes[id]||0)+state.activeChip;
       afterBetChange();
     };
-    t.appendChild(dot);
+    t.appendChild(zone);
   }
 
   // Horizontales: une n con n+1 cuando ambos están en la misma fila (no cruza de columna de docena visual,
