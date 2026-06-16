@@ -393,7 +393,7 @@ table.data tr:hover td{background:rgba(255,255,255,.02)}
   <div class="panel">
     <p class="eyebrow">Paso 2 — Mesa europea (0–36)</p>
     <h2>🟢 Coloca tus apuestas</h2>
-    <p class="sub">Clic en un número = apuesta directa (35:1). Clic en un <b>punto dorado</b> entre dos números = apuesta dividida / <i>split</i> (17:1). Clic en la insignia dorada de una apuesta existente = quitarla.</p>
+    <p class="sub">Clic en un número = apuesta directa (35:1). Clic en la línea dorada entre dos números = apuesta dividida / <i>split</i> (17:1). Clic en la insignia dorada de una apuesta existente = quitarla.</p>
     <div class="table-scroll">
       <div class="roulette-table" id="table"></div>
     </div>
@@ -727,7 +727,7 @@ function makeCell(id,label,cls){
   return d;
 }
 function refreshBadges(){
-  $$("#table .cell, #table .split-dot").forEach(cell=>{
+  $$("#table .cell, #table .split-zone").forEach(cell=>{
     const id=cell.dataset.id;
     const old=cell.querySelector(".stake-badge");
     if(old) old.remove();
