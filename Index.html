@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ROPROST ROULETTE LAB — Laboratorio de Estrategias de Ruleta</title>
+<style>
+/* ===================================================================
+   ROPROST ROULETTE LAB
+   Paleta: negro carbón · fieltro verde · dorado.
+   Tipografía: serif de alto contraste (titulares) + monospace (datos
+   de laboratorio). Sin dependencias externas obligatorias.
+   =================================================================== */
+:root{
+  --bg:#070d0a;
+  --bg-2:#0a1410;
+  --felt:#0c3a2a;
+  --felt-2:#0a2e22;
+  --panel:#101a15;
+  --panel-2:#0c130f;
+  --line:#1d2c24;
+  --gold:#d4af37;
+  --gold-bright:#f0d27a;
+  --gold-dim:#9c7c2f;
+  --ivory:#f3eede;
+  --muted:#9bb0a4;
+  --red:#b3232b;
+  --red-2:#c0392b;
+  --black-num:#16130f;
+  --green:#1f7a52;
+  --win:#37c98a;
+  --lose:#e0555b;
+  --tie:#c9a94a;
+  --radius:14px;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --serif:Georgia,"Times New Roman",Cambria,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #0e201a 0%, transparent 60%),
+    radial-gradient(900px 500px at 90% 110%, #0a1f17 0%, transparent 55%),
+    var(--bg);
+  color:var(--ivory);
+  font-family:var(--sans);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+a{color:var(--gold-bright)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 80px}
+
+/* ---------- Encabezado ---------- */
+header.top{
+  text-align:center;
+  padding:38px 16px 18px;
+  position:relative;
+}
+.brand{
+  font-family:var(--serif);
+  font-size:clamp(30px,6vw,56px);
+  letter-spacing:.5px;
+  margin:0;
+  font-weight:700;
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold) 55%,var(--gold-dim));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 1px 0 rgba(0,0,0,.4);
+}
+.brand .chip-emoji{ -webkit-text-fill-color:initial; color:initial }
+.tagline{
+  font-family:var(--serif);font-style:italic;color:var(--muted);
+  margin:.2rem 0 0;font-size:clamp(14px,2.4vw,19px);letter-spacing:.4px;
+}
+.rule{
+  width:120px;height:2px;margin:16px auto 0;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.disclaimer{
+  max-width:760px;margin:18px auto 0;font-size:13px;color:var(--muted);
+  border:1px solid var(--line);background:rgba(180,150,50,.05);
+  border-radius:10px;padding:10px 14px;text-align:center;
+}
+.disclaimer strong{color:var(--gold-bright)}
+
+/* ---------- Navegación de pestañas ---------- */
+nav.tabs{
+  position:sticky;top:0;z-index:30;
+  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;
+  padding:10px 8px;margin:18px 0 26px;
+  background:rgba(7,13,10,.82);backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+nav.tabs button{
+  font-family:var(--sans);font-size:14px;font-weight:600;letter-spacing:.3px;
+  color:var(--muted);background:transparent;border:1px solid transparent;
+  padding:9px 16px;border-radius:999px;cursor:pointer;transition:all .18s ease;
+}
+nav.tabs button:hover{color:var(--ivory)}
+nav.tabs button.active{
+  color:#0a120d;background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+  border-color:var(--gold-dim);box-shadow:0 4px 14px rgba(212,175,55,.25);
+}
+.tabview{display:none;animation:fade .25s ease}
+.tabview.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- Tarjetas / paneles ---------- */
+.panel{
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;margin-bottom:20px;
+}
+.panel h2{
+  font-family:var(--serif);font-size:20px;margin:0 0 4px;color:var(--gold-bright);
+  display:flex;align-items:center;gap:8px;
+}
+.panel .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--gold-dim);margin:0 0 6px;
+}
+
+/* ---------- Selector de ficha ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{
+  font-family:var(--mono);font-weight:700;font-size:14px;
+  min-width:60px;text-align:center;padding:10px 12px;cursor:pointer;
+  border-radius:999px;border:1px solid var(--gold-dim);
+  background:radial-gradient(circle at 30% 25%, #2a2417, #15120b);
+  color:var(--gold-bright);transition:transform .12s ease,box-shadow .12s ease;
+  position:relative;
+}
+.chip:hover{transform:translateY(-2px)}
+.chip.active{
+  background:radial-gradient(circle at 30% 25%, var(--gold-bright), var(--gold) 70%, var(--gold-dim));
+  color:#19140a;box-shadow:0 0 0 2px rgba(240,210,122,.4),0 6px 16px rgba(212,175,55,.3);
+}
+.custom-chip{display:flex;align-items:center;gap:6px;
+  border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;background:var(--panel-2)}
+.custom-chip span{font-family:var(--mono);color:var(--muted);font-size:13px}
+.custom-chip input{
+  width:74px;background:transparent;border:none;color:var(--ivory);
+  font-family:var(--mono);font-size:14px;outline:none;
+}
+.custom-chip button{
+  font-family:var(--mono);font-weight:700;background:var(--gold);color:#19140a;
+  border:none;border-radius:999px;padding:7px 12px;cursor:pointer;font-size:13px;
+}
+
+/* ---------- Mesa de ruleta ---------- */
+.table-scroll{overflow-x:auto;padding-bottom:6px;margin:6px 0 0}
+.roulette-table{
+  display:grid;
+  grid-template-columns:46px repeat(12,minmax(40px,1fr)) 58px;
+  grid-template-rows:repeat(3,52px) 42px 42px;
+  gap:4px;min-width:640px;
+  background:linear-gradient(180deg,var(--felt),var(--felt-2));
+  border:2px solid var(--gold-dim);border-radius:12px;padding:10px;
+}
+.cell{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;color:var(--ivory);
+  border-radius:7px;cursor:pointer;user-select:none;border:1px solid rgba(255,255,255,.08);
+  transition:transform .1s ease, box-shadow .1s ease, filter .1s ease;font-size:15px;
+}
+.cell:hover{transform:translateY(-1px);filter:brightness(1.12);
+  box-shadow:0 0 0 2px var(--gold-bright)}
+.cell.red{background:linear-gradient(180deg,#c83b42,var(--red))}
+.cell.black{background:linear-gradient(180deg,#23201b,var(--black-num))}
+.cell.green{background:linear-gradient(180deg,#2aa06b,var(--green))}
+.cell.zero{grid-column:1;grid-row:1/4;font-size:20px}
+.cell.outside{
+  background:linear-gradient(180deg,#103e2d,#0b2c20);font-size:12.5px;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--gold-bright);text-align:center;line-height:1.1;padding:2px;
+}
+.cell.colbet{font-size:11px}
+.stake-badge{
+  position:absolute;top:-7px;right:-7px;
+  min-width:22px;height:22px;padding:0 5px;border-radius:999px;
+  background:radial-gradient(circle at 30% 25%,var(--gold-bright),var(--gold));
+  color:#19140a;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.5);border:1px solid #fff6d8;
+}
+.cell.has-bet{box-shadow:0 0 0 2px var(--gold-bright),0 0 14px rgba(240,210,122,.35)}
+
+.bet-summary{
+  display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;
+  margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);
+}
+.bet-list{font-family:var(--mono);font-size:13px;color:var(--muted);flex:1;min-width:200px}
+.bet-list b{color:var(--ivory)}
+.per-spin{font-family:var(--mono);font-size:15px}
+.per-spin b{color:var(--gold-bright);font-size:20px}
+
+/* ---------- Botones genéricos ---------- */
+.btn{
+  font-family:var(--sans);font-weight:600;font-size:14px;cursor:pointer;
+  border-radius:10px;padding:11px 16px;border:1px solid var(--gold-dim);
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#16120a;
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(212,175,55,.28)}
+.btn.ghost{background:transparent;color:var(--ivory);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--gold);box-shadow:none}
+.btn.danger{background:transparent;color:var(--lose);border-color:#5a2a2c}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+.field{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.field label{font-size:13px;color:var(--muted);font-family:var(--mono)}
+.field input,.field select{
+  background:var(--panel-2);border:1px solid var(--line);color:var(--ivory);
+  font-family:var(--mono);padding:9px 11px;border-radius:9px;outline:none;font-size:14px;
+}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+
+/* ---------- Botones de simulación ---------- */
+.sim-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.sim-buttons button{
+  font-family:var(--mono);font-weight:700;font-size:14px;cursor:pointer;
+  border:1px solid var(--line);background:var(--panel-2);color:var(--ivory);
+  padding:11px 14px;border-radius:10px;transition:all .14s ease;min-width:84px;
+}
+.sim-buttons button:hover{border-color:var(--gold);color:var(--gold-bright);transform:translateY(-2px)}
+
+/* ---------- Estadísticas ---------- */
+.stats-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:6px;
+}
+.stat{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:13px 14px;
+}
+.stat .k{font-family:var(--mono);font-size:11px;letter-spacing:.6px;color:var(--muted);
+  text-transform:uppercase;margin-bottom:5px}
+.stat .v{font-family:var(--mono);font-size:21px;font-weight:700;color:var(--ivory)}
+.stat .v.pos{color:var(--win)}
+.stat .v.neg{color:var(--lose)}
+.stat .v.gold{color:var(--gold-bright)}
+
+/* ---------- Gráficos ---------- */
+.charts{display:grid;grid-template-columns:1fr;gap:18px}
+.chart-card{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:14px}
+.chart-card h3{margin:0 0 4px;font-family:var(--serif);font-size:16px;color:var(--gold-bright)}
+.chart-card .legend{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-bottom:8px}
+.chart-card canvas{width:100%;height:auto;display:block}
+@media(min-width:820px){.charts{grid-template-columns:1fr 1fr}.chart-card.full{grid-column:1/-1}}
+
+/* ---------- Tabla historial / comparador ---------- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px}
+table.data{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;min-width:480px}
+table.data th{
+  background:var(--felt-2);color:var(--gold-bright);text-align:left;padding:10px 12px;
+  font-weight:700;letter-spacing:.4px;position:sticky;top:0;
+}
+table.data td{padding:9px 12px;border-top:1px solid var(--line)}
+table.data tr:hover td{background:rgba(255,255,255,.02)}
+.tag{font-weight:700;padding:2px 9px;border-radius:999px;font-size:12px}
+.tag.win{background:rgba(55,201,138,.15);color:var(--win)}
+.tag.lose{background:rgba(224,85,91,.15);color:var(--lose)}
+.tag.tie{background:rgba(201,169,74,.15);color:var(--tie)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.dot.red{background:var(--red-2)}.dot.black{background:#444}.dot.green{background:var(--green)}
+.pager{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:13px;color:var(--muted)}
+
+/* ---------- Guardadas / comparador listas ---------- */
+.saved-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:10px}
+.saved-card{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:13px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.saved-card .nm{font-family:var(--serif);font-size:16px;color:var(--gold-bright);display:flex;
+  align-items:center;gap:6px}
+.saved-card .desc{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:32px}
+.saved-card .row{display:flex;gap:8px;flex-wrap:wrap}
+.check-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:9px;background:var(--panel-2);margin-bottom:8px;font-family:var(--mono);font-size:13px}
+.check-row input{width:18px;height:18px;accent-color:var(--gold)}
+.crown{color:var(--gold-bright)}
+
+/* ---------- Analizador IA ---------- */
+.gauge{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px}
+.gauge .g{flex:1;min-width:160px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:11px;padding:14px;text-align:center}
+.gauge .g .lbl{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.gauge .g .big{font-family:var(--serif);font-size:26px;margin-top:6px}
+.risk-bajo{color:var(--win)}.risk-medio{color:var(--tie)}.risk-alto{color:var(--lose)}
+.ia-comment{
+  margin-top:16px;border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 10px 10px 0;
+  background:rgba(212,175,55,.06);font-size:14.5px;color:var(--ivory);line-height:1.6;
+}
+.ia-comment .who{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--gold-dim);
+  text-transform:uppercase;display:block;margin-bottom:6px}
+.coverage-bar{height:14px;border-radius:999px;background:var(--panel);overflow:hidden;
+  border:1px solid var(--line);margin-top:8px}
+.coverage-bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright))}
+
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+  background:var(--panel);border:1px solid var(--gold-dim);color:var(--ivory);
+  padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;
+  transition:all .25s ease;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.muted{color:var(--muted)}
+.center{text-align:center}
+.spacer{height:8px}
+.empty{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center;padding:24px}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important}
+}
+@media(max-width:560px){
+  .stat .v{font-size:18px}
+  .per-spin b{font-size:17px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 class="brand"><span class="chip-emoji">🎰</span> ROPROST ROULETTE LAB</h1>
+  <p class="tagline">Laboratorio de Estrategias de Ruleta</p>
+  <div class="rule"></div>
+  <p class="disclaimer">
+    <strong>Solo fines educativos y estadísticos.</strong> Ninguna estrategia garantiza ganancias
+    a largo plazo. La ruleta europea conserva siempre la ventaja matemática del casino (el <b>0</b>).
+  </p>
+</header>
+
+<nav class="tabs">
+  <button data-tab="lab" class="active">Simulador</button>
+  <button data-tab="compare">Comparador</button>
+  <button data-tab="saved">Guardadas</button>
+  <button data-tab="ia">Análisis IA</button>
+</nav>
+
+<div class="wrap">
+
+<!-- ============================ SIMULADOR ============================ -->
+<section id="lab" class="tabview active">
+
+  <div class="panel">
+    <p class="eyebrow">Paso 1 — Ficha</p>
+    <h2>🎯 Creador de estrategias</h2>
+    <p class="sub">Elige una ficha y haz clic sobre la mesa para apostar. Puedes combinar todas las apuestas que quieras.</p>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="panel">
+    <p class="eyebrow">Paso 2 — Mesa europea (0–36)</p>
+    <h2>🟢 Coloca tus apuestas</h2>
+    <p class="sub">Clic = añadir ficha activa. Clic en la insignia dorada de una casilla = quitar esa apuesta.</p>
+    <div class="table-scroll">
+      <div class="roulette-table" id="table"></div>
+    </div>
+    <div class="bet-summary">
+      <div class="bet-list" id="betList">Sin apuestas. Selecciona una ficha y toca la mesa.</div>
+      <div class="per-spin">Total por giro: <b id="perSpin">S/0.00</b>
+        <button class="btn ghost sm" id="clearBets" style="margin-left:10px">Limpiar</button>
+        <button class="btn ghost sm" id="saveBtn">⭐ Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="eyebrow">Paso 3 — Banca y motor</p>
+    <h2>🎲 Motor de simulación</h2>
+    <div class="field" style="margin-bottom:12px">
+      <label for="bankroll">Banca inicial (S/)</label>
+      <input type="number" id="bankroll" value="1000" min="0" step="any" style="width:130px">
+      <span class="muted" style="font-size:12px">El balance puede volverse negativo en el simulador (deuda virtual) para no detener el estudio estadístico.</span>
+    </div>
+    <p class="sub" style="margin-bottom:6px">Elige el número de giros — la simulación corre al instante:</p>
+    <div class="sim-buttons" id="simButtons"></div>
+  </div>
+
+  <div class="panel" id="resultsPanel" style="display:none">
+    <p class="eyebrow">Resultados</p>
+    <h2>📊 Estadísticas completas</h2>
+    <div class="stats-grid" id="stats"></div>
+
+    <div class="spacer"></div>
+    <p class="eyebrow" style="margin-top:18px">Rachas</p>
+    <h2>🔥 Rachas</h2>
+    <div class="stats-grid" id="streaks"></div>
+
+    <div class="spacer"></div>
+    <p class="eyebrow" style="margin-top:18px">Visualización</p>
+    <h2>📈 Gráficos</h2>
+    <div class="charts">
+      <div class="chart-card full">
+        <h3>Evolución del balance</h3>
+        <div class="legend" id="balLegend"></div>
+        <canvas id="cBalance" width="900" height="300"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Distribución de resultados</h3>
+        <div class="legend">Ganados · Empatados · Perdidos</div>
+        <canvas id="cDist" width="440" height="300"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Frecuencia de números (0–36)</h3>
+        <div class="legend" id="freqLegend"></div>
+        <canvas id="cFreq" width="440" height="300"></canvas>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <p class="eyebrow" style="margin-top:18px">Detalle</p>
+    <h2>📋 Historial completo
+      <button class="btn sm" id="exportBtn" style="margin-left:auto">⬇ Exportar CSV</button>
+    </h2>
+    <div class="tbl-wrap">
+      <table class="data" id="historyTbl">
+        <thead><tr><th>Giro</th><th>Número</th><th>Color</th><th>Resultado</th><th>Neto giro</th><th>Balance</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pager"></div>
+  </div>
+</section>
+
+<!-- ============================ COMPARADOR ============================ -->
+<section id="compare" class="tabview">
+  <div class="panel">
+    <p class="eyebrow">Mismo azar para todas</p>
+    <h2>🏆 Comparador de estrategias</h2>
+    <p class="sub">Todas las estrategias se enfrentan a <b>la misma secuencia de giros</b>, para una comparación justa.</p>
+    <div class="field" style="margin-bottom:14px">
+      <label for="cmpCount">Giros</label>
+      <select id="cmpCount">
+        <option>100</option><option>200</option><option>500</option>
+        <option selected>1000</option><option>5000</option><option>10000</option>
+        <option>50000</option><option>100000</option>
+      </select>
+      <button class="btn" id="runCompare">Comparar</button>
+    </div>
+    <div id="cmpChooser"></div>
+    <div id="cmpResult"></div>
+  </div>
+</section>
+
+<!-- ============================ GUARDADAS ============================ -->
+<section id="saved" class="tabview">
+  <div class="panel">
+    <p class="eyebrow">LocalStorage</p>
+    <h2>💾 Estrategias guardadas</h2>
+    <p class="sub">Guarda tus combinaciones favoritas desde el Simulador. Persisten en este navegador.</p>
+    <div id="savedList" class="saved-list"></div>
+  </div>
+</section>
+
+<!-- ============================ ANALIZADOR IA ============================ -->
+<section id="ia" class="tabview">
+  <div class="panel">
+    <p class="eyebrow">Análisis inteligente</p>
+    <h2>🧠 Analizador de estrategia</h2>
+    <p class="sub">Evalúa la estrategia activa en el Simulador antes de simular.</p>
+    <div class="gauge" id="iaGauge"></div>
+    <div style="margin-top:14px">
+      <div class="muted" style="font-family:var(--mono);font-size:12px">Cobertura de números</div>
+      <div class="coverage-bar"><i id="covBar" style="width:0%"></i></div>
+    </div>
+    <div class="ia-comment" id="iaComment"><span class="who">Análisis IA</span>Configura una estrategia en el Simulador para analizarla.</div>
+  </div>
+</section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ===================================================================
+   1. DATOS BASE DE LA RULETA EUROPEA
+   =================================================================== */
+const RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+// Orden real de la rueda europea (solo para referencia/estética)
+const WHEEL_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+
+function colorOf(n){ return n===0 ? "green" : (RED.has(n) ? "red" : "black"); }
+function colorLabel(n){ return n===0 ? "Verde" : (RED.has(n) ? "Rojo" : "Negro"); }
+
+// Definición de cada mercado: etiqueta, pago (ratio neto) y función de victoria.
+const MARKETS = {
+  red:  {label:"Rojo",       ratio:1, win:n=>RED.has(n)},
+  black:{label:"Negro",      ratio:1, win:n=>n!==0 && !RED.has(n)},
+  even: {label:"Par",        ratio:1, win:n=>n!==0 && n%2===0},
+  odd:  {label:"Impar",      ratio:1, win:n=>n%2===1},
+  low:  {label:"1–18",       ratio:1, win:n=>n>=1 && n<=18},
+  high: {label:"19–36",      ratio:1, win:n=>n>=19 && n<=36},
+  d1:   {label:"1ª Docena (1–12)",  ratio:2, win:n=>n>=1 && n<=12},
+  d2:   {label:"2ª Docena (13–24)", ratio:2, win:n=>n>=13 && n<=24},
+  d3:   {label:"3ª Docena (25–36)", ratio:2, win:n=>n>=25 && n<=36},
+  c1:   {label:"Columna 1",  ratio:2, win:n=>n!==0 && n%3===1},
+  c2:   {label:"Columna 2",  ratio:2, win:n=>n!==0 && n%3===2},
+  c3:   {label:"Columna 3",  ratio:2, win:n=>n!==0 && n%3===0},
+};
+// Números exactos: id "n0".."n36", pago 35:1
+function isStraight(id){ return /^n([0-9]|[12][0-9]|3[0-6])$/.test(id); }
+function straightNum(id){ return parseInt(id.slice(1),10); }
+function marketWin(id,n){
+  if(isStraight(id)) return straightNum(id)===n;
+  return MARKETS[id].win(n);
+}
+function marketRatio(id){ return isStraight(id) ? 35 : MARKETS[id].ratio; }
+function marketLabel(id){ return isStraight(id) ? ("Nº "+straightNum(id)) : MARKETS[id].label; }
+
+/* ===================================================================
+   2. ESTADO GLOBAL
+   =================================================================== */
+const state = {
+  activeChip: 1,        // ficha seleccionada
+  stakes: {},           // id -> monto apostado
+  bankroll: 1000,
+  lastSim: null,        // resultado de la última simulación
+};
+const QUICK = [0.5,1,2,3,5,10,20,50];
+const SIM_COUNTS = [100,200,500,1000,5000,10000,50000,100000];
+
+/* ---- Almacenamiento con respaldo en memoria (funciona en GitHub Pages
+        y no rompe si LocalStorage está bloqueado, p.ej. en vistas previas) ---- */
+const STORE_KEY = "roprost_strategies_v1";
+let memFallback = [];
+const Store = {
+  load(){
+    try{ const raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : []; }
+    catch(e){ return memFallback.slice(); }
+  },
+  save(arr){
+    memFallback = arr.slice();
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }catch(e){/* memoria */}
+  }
+};
+
+/* ===================================================================
+   3. UTILIDADES
+   =================================================================== */
+const $  = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
+function money(v){
+  const s = (v<0?"-":"") + "S/" + Math.abs(v).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});
+  return s;
+}
+function pct(v){ return (v*100).toFixed(2) + "%"; }
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function totalStake(stakes){ let s=0; for(const k in stakes) s+=stakes[k]; return s; }
+function hasBets(stakes){ for(const k in stakes) if(stakes[k]>0) return true; return false; }
+
+/* ===================================================================
+   4. CONSTRUCCIÓN DE INTERFAZ — Fichas
+   =================================================================== */
+function buildChips(){
+  const c = $("#chips"); c.innerHTML="";
+  QUICK.forEach(v=>{
+    const b=document.createElement("div");
+    b.className="chip"+(v===state.activeChip?" active":"");
+    b.textContent = "S/"+v;
+    b.onclick=()=>{ state.activeChip=v; buildChips(); };
+    c.appendChild(b);
+  });
+  // ficha personalizada
+  const wrap=document.createElement("div"); wrap.className="custom-chip";
+  wrap.innerHTML='<span>S/</span><input type="number" min="0.01" step="any" placeholder="monto" id="customChip"><button id="setCustom">Usar</button>';
+  c.appendChild(wrap);
+  $("#setCustom").onclick=()=>{
+    const v=parseFloat($("#customChip").value);
+    if(v>0){ state.activeChip=v; buildChips(); toast("Ficha activa: "+money(v)); }
+  };
+}
+
+/* ---- Mesa de ruleta ---- */
+function buildTable(){
+  const t=$("#table"); t.innerHTML="";
+  // 0 (verde) a la izquierda, abarca 3 filas
+  t.appendChild(makeCell("n0","0","green zero"));
+  // Números 1..36 en disposición estándar (3 filas x 12 columnas)
+  // fila superior: 3,6,...,36 ; media: 2,5,...,35 ; inferior: 1,4,...,34
+  const rows=[[],[],[]];
+  for(let col=0;col<12;col++){
+    rows[0].push(col*3+3);
+    rows[1].push(col*3+2);
+    rows[2].push(col*3+1);
+  }
+  // Insertamos respetando el grid (col 2..13). Construimos por filas con celdas de columna al final.
+  const colBetLabels=["2:1","2:1","2:1"]; // c3, c2, c1
+  const colBetIds=["c3","c2","c1"];
+  for(let r=0;r<3;r++){
+    rows[r].forEach((num,ci)=>{
+      const cell=makeCell("n"+num, String(num), colorOf(num));
+      cell.style.gridColumn=(ci+2);
+      cell.style.gridRow=(r+1);
+      t.appendChild(cell);
+    });
+    const cb=makeCell(colBetIds[r], colBetLabels[r], "outside colbet");
+    cb.title="Columna "+(3-r);
+    cb.style.gridColumn=14; cb.style.gridRow=(r+1);
+    t.appendChild(cb);
+  }
+  // Docenas (fila 4)
+  const dz=[["d1","1ª Docena"],["d2","2ª Docena"],["d3","3ª Docena"]];
+  dz.forEach((d,i)=>{
+    const cell=makeCell(d[0],d[1],"outside");
+    cell.style.gridColumn=(2+i*4)+" / span 4"; cell.style.gridRow=4;
+    t.appendChild(cell);
+  });
+  // Apuestas externas (fila 5): 1-18, PAR, ROJO, NEGRO, IMPAR, 19-36
+  const ev=[["low","1–18"],["even","PAR"],["red","ROJO"],["black","NEGRO"],["odd","IMPAR"],["high","19–36"]];
+  ev.forEach((e,i)=>{
+    let extra="outside";
+    if(e[0]==="red") extra="red";
+    if(e[0]==="black") extra="black";
+    const cell=makeCell(e[0],e[1],extra);
+    cell.style.gridColumn=(2+i*2)+" / span 2"; cell.style.gridRow=5;
+    t.appendChild(cell);
+  });
+  refreshBadges();
+}
+function makeCell(id,label,cls){
+  const d=document.createElement("div");
+  d.className="cell "+cls; d.dataset.id=id; d.textContent=label;
+  d.onclick=(e)=>{
+    // clic en la insignia => quitar
+    if(e.target.classList.contains("stake-badge")){ delete state.stakes[id]; afterBetChange(); return; }
+    state.stakes[id]=(state.stakes[id]||0)+state.activeChip;
+    afterBetChange();
+  };
+  return d;
+}
+function refreshBadges(){
+  $$("#table .cell").forEach(cell=>{
+    const id=cell.dataset.id;
+    const old=cell.querySelector(".stake-badge");
+    if(old) old.remove();
+    cell.classList.remove("has-bet");
+    if(state.stakes[id]>0){
+      cell.classList.add("has-bet");
+      const b=document.createElement("span");
+      b.className="stake-badge";
+      b.textContent = state.stakes[id]%1===0 ? state.stakes[id] : state.stakes[id].toFixed(2);
+      cell.appendChild(b);
+    }
+  });
+}
+function afterBetChange(){ refreshBadges(); renderBetSummary(); renderIA(); }
+
+function renderBetSummary(){
+  const list=$("#betList");
+  const ids=Object.keys(state.stakes).filter(k=>state.stakes[k]>0);
+  if(!ids.length){ list.innerHTML="Sin apuestas. Selecciona una ficha y toca la mesa."; }
+  else{
+    list.innerHTML = ids.map(id=>`<b>${marketLabel(id)}</b> → ${money(state.stakes[id])}`).join(" &nbsp;·&nbsp; ");
+  }
+  $("#perSpin").textContent = money(totalStake(state.stakes));
+}
+
+/* ---- Botones de simulación ---- */
+function buildSimButtons(){
+  const c=$("#simButtons"); c.innerHTML="";
+  SIM_COUNTS.forEach(n=>{
+    const b=document.createElement("button");
+    b.textContent = n.toLocaleString("es-PE")+" giros";
+    b.onclick=()=>runAndShow(n);
+    c.appendChild(b);
+  });
+}
+
+/* ===================================================================
+   5. MOTOR DE SIMULACIÓN (optimizado para 100,000 giros)
+   =================================================================== */
+// Precalcula el resultado neto por número (0..36) según las apuestas dadas.
+function buildLookup(stakes){
+  const net=new Float64Array(37);
+  let stake=0;
+  const ids=Object.keys(stakes).filter(k=>stakes[k]>0);
+  for(const id of ids) stake+=stakes[id];
+  for(let n=0;n<=36;n++){
+    let s=0;
+    for(const id of ids){
+      const a=stakes[id];
+      if(marketWin(id,n)) s += a*marketRatio(id);
+      else s -= a;
+    }
+    net[n]=s;
+  }
+  return {net, stake};
+}
+
+// Ejecuta `count` giros. Opcionalmente con una secuencia de números compartida.
+function simulate(stakes, bankroll, count, sharedNumbers){
+  const {net, stake} = buildLookup(stakes);
+  const numbers = sharedNumbers || new Uint8Array(count);
+  const balanceFull = new Float64Array(count);
+  const freq = new Int32Array(37);
+
+  let bal = bankroll;
+  let won=0, tied=0, lost=0;
+  let grossWin=0, grossLoss=0;
+  let curWin=0, curLose=0, bestWin=0, worstLose=0;
+
+  // muestreo del balance para el gráfico (máx ~700 puntos)
+  const sampleStep = Math.max(1, Math.floor(count/700));
+  const balSamples=[bankroll];
+
+  for(let i=0;i<count;i++){
+    let num;
+    if(sharedNumbers){ num=numbers[i]; }
+    else { num=(Math.random()*37)|0; numbers[i]=num; }
+    freq[num]++;
+    const r=net[num];
+    bal += r;
+    balanceFull[i]=bal;
+
+    if(r>0){ won++; grossWin+=r; curWin++; curLose=0; if(curWin>bestWin) bestWin=curWin; }
+    else if(r<0){ lost++; grossLoss+=(-r); curLose++; curWin=0; if(curLose>worstLose) worstLose=curLose; }
+    else { tied++; curWin=0; curLose=0; }
+
+    if(i%sampleStep===0) balSamples.push(bal);
+  }
+  if(balSamples[balSamples.length-1]!==bal) balSamples.push(bal);
+
+  const totalStaked = stake*count;
+  const net_profit = bal - bankroll;          // beneficio neto
+  const roi = totalStaked>0 ? net_profit/totalStaked : 0;
+
+  // racha actual (al final): positiva=ganadora, negativa=perdedora
+  const currentStreak = curWin>0 ? curWin : (curLose>0 ? -curLose : 0);
+
+  return {
+    count, numbers, balanceFull, freq, net, stakePerSpin:stake,
+    bankrollStart:bankroll, balanceEnd:bal,
+    won, tied, lost,
+    winRate: count? won/count : 0,
+    loseRate: count? lost/count : 0,
+    totalStaked, grossWin, grossLoss, netProfit:net_profit, roi,
+    bestWin, worstLose, currentStreak, balSamples,
+  };
+}
+
+function runAndShow(count){
+  if(!hasBets(state.stakes)){ toast("Coloca al menos una apuesta en la mesa."); return; }
+  state.bankroll = parseFloat($("#bankroll").value)||0;
+  const t0=performance.now();
+  const res = simulate(state.stakes, state.bankroll, count);
+  const ms=(performance.now()-t0).toFixed(0);
+  state.lastSim = res;
+  renderResults(res, ms);
+  $("#resultsPanel").style.display="block";
+  $("#resultsPanel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ===================================================================
+   6. RENDER DE RESULTADOS
+   =================================================================== */
+function statCard(k,v,cls){ return `<div class="stat"><div class="k">${k}</div><div class="v ${cls||""}">${v}</div></div>`; }
+
+function renderResults(r, ms){
+  const balCls = r.netProfit>0?"pos":(r.netProfit<0?"neg":"gold");
+  $("#stats").innerHTML =
+    statCard("Total de giros", r.count.toLocaleString("es-PE")) +
+    statCard("Giros ganados", r.won.toLocaleString("es-PE"),"pos") +
+    statCard("Giros empatados", r.tied.toLocaleString("es-PE"),"gold") +
+    statCard("Giros perdidos", r.lost.toLocaleString("es-PE"),"neg") +
+    statCard("% de éxito", pct(r.winRate),"pos") +
+    statCard("% de pérdida", pct(r.loseRate),"neg") +
+    statCard("Total apostado", money(r.totalStaked)) +
+    statCard("Ganancia bruta", money(r.grossWin),"pos") +
+    statCard("Pérdida bruta", money(r.grossLoss),"neg") +
+    statCard("Balance final", money(r.balanceEnd), balCls) +
+    statCard("ROI", (r.roi*100).toFixed(2)+"%", balCls) +
+    statCard("Beneficio neto", money(r.netProfit), balCls);
+
+  $("#streaks").innerHTML =
+    statCard("Mejor racha ganadora", r.bestWin+" giros","pos") +
+    statCard("Peor racha perdedora", r.worstLose+" giros","neg") +
+    statCard("Racha actual",
+      (r.currentStreak>0? "+"+r.currentStreak+" ganando" :
+       r.currentStreak<0? r.currentStreak+" perdiendo" : "neutra"),
+      r.currentStreak>0?"pos":(r.currentStreak<0?"neg":"gold"));
+
+  $("#balLegend").textContent =
+    "Inicial "+money(r.bankrollStart)+"  →  Final "+money(r.balanceEnd)+"   ·   simulado en "+ms+" ms";
+  drawBalance($("#cBalance"), r.balSamples, r.bankrollStart);
+  drawDistribution($("#cDist"), r.won, r.tied, r.lost);
+  drawFrequency($("#cFreq"), r.freq);
+
+  renderHistory(0);
+}
+
+/* ===================================================================
+   7. GRÁFICOS EN CANVAS (sin librerías)
+   =================================================================== */
+function prep(canvas){
+  const ratio=window.devicePixelRatio||1;
+  const cssW=canvas.clientWidth||canvas.width;
+  const cssH=parseInt(canvas.getAttribute("height"),10);
+  canvas.width=cssW*ratio; canvas.height=cssH*ratio;
+  const ctx=canvas.getContext("2d");
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+  return {ctx,w:cssW,h:cssH};
+}
+function drawBalance(canvas, samples, start){
+  const {ctx,w,h}=prep(canvas);
+  const pad={l:64,r:16,t:16,b:26};
+  const min=Math.min(...samples), max=Math.max(...samples);
+  const range=(max-min)||1;
+  const x=i=> pad.l + (w-pad.l-pad.r)*(i/(samples.length-1||1));
+  const y=v=> pad.t + (h-pad.t-pad.b)*(1-(v-min)/range);
+  // cuadrícula + ejes
+  ctx.strokeStyle="#1d2c24"; ctx.lineWidth=1; ctx.font="11px ui-monospace,monospace";
+  ctx.fillStyle="#9bb0a4"; ctx.textAlign="right"; ctx.textBaseline="middle";
+  for(let g=0;g<=4;g++){
+    const val=min+range*g/4, yy=y(val);
+    ctx.beginPath(); ctx.moveTo(pad.l,yy); ctx.lineTo(w-pad.r,yy); ctx.stroke();
+    ctx.fillText(money(val), pad.l-8, yy);
+  }
+  // línea de banca inicial
+  ctx.strokeStyle="rgba(212,175,55,.5)"; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l,y(start)); ctx.lineTo(w-pad.r,y(start)); ctx.stroke();
+  ctx.setLineDash([]);
+  // relleno bajo curva
+  const grad=ctx.createLinearGradient(0,pad.t,0,h-pad.b);
+  grad.addColorStop(0,"rgba(55,201,138,.28)"); grad.addColorStop(1,"rgba(55,201,138,0)");
+  ctx.beginPath(); ctx.moveTo(x(0),y(samples[0]));
+  for(let i=1;i<samples.length;i++) ctx.lineTo(x(i),y(samples[i]));
+  ctx.lineTo(x(samples.length-1),h-pad.b); ctx.lineTo(x(0),h-pad.b); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  // curva
+  const end=samples[samples.length-1];
+  ctx.strokeStyle = end>=start ? "#37c98a" : "#e0555b"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x(0),y(samples[0]));
+  for(let i=1;i<samples.length;i++) ctx.lineTo(x(i),y(samples[i]));
+  ctx.stroke();
+}
+function drawDistribution(canvas, won, tied, lost){
+  const {ctx,w,h}=prep(canvas);
+  const total=won+tied+lost||1;
+  const data=[["Ganados",won,"#37c98a"],["Empatados",tied,"#c9a94a"],["Perdidos",lost,"#e0555b"]];
+  const cx=w*0.36, cy=h/2, R=Math.min(w*0.30,h*0.40), r=R*0.58;
+  let a=-Math.PI/2;
+  data.forEach(d=>{
+    const frac=d[1]/total, a2=a+frac*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,R,a,a2); ctx.closePath();
+    ctx.fillStyle=d[2]; ctx.fill();
+    a=a2;
+  });
+  // agujero (donut)
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle="#0c130f"; ctx.fill();
+  // leyenda
+  ctx.textAlign="left"; ctx.textBaseline="middle"; ctx.font="13px ui-monospace,monospace";
+  let ly=cy-26;
+  data.forEach(d=>{
+    ctx.fillStyle=d[2]; ctx.fillRect(w*0.66, ly-6, 12,12);
+    ctx.fillStyle="#f3eede";
+    ctx.fillText(`${d[0]}: ${d[1].toLocaleString("es-PE")} (${(d[1]/total*100).toFixed(1)}%)`, w*0.66+18, ly);
+    ly+=26;
+  });
+}
+function drawFrequency(canvas, freq){
+  const {ctx,w,h}=prep(canvas);
+  const pad={l:30,r:8,t:10,b:22};
+  const max=Math.max(...freq)||1;
+  const n=37, bw=(w-pad.l-pad.r)/n;
+  ctx.font="9px ui-monospace,monospace"; ctx.textAlign="center"; ctx.textBaseline="top";
+  for(let i=0;i<n;i++){
+    const bh=(h-pad.t-pad.b)*(freq[i]/max);
+    const x=pad.l+i*bw, y=h-pad.b-bh;
+    ctx.fillStyle = i===0 ? "#1f7a52" : (RED.has(i) ? "#c0392b" : "#5a5550");
+    ctx.fillRect(x+1,y,bw-2,bh);
+    if(i%3===0){ ctx.fillStyle="#9bb0a4"; ctx.fillText(i, x+bw/2, h-pad.b+3); }
+  }
+  ctx.strokeStyle="#1d2c24"; ctx.beginPath();
+  ctx.moveTo(pad.l,h-pad.b); ctx.lineTo(w-pad.r,h-pad.b); ctx.stroke();
+  const exp=(freq.reduce((a,b)=>a+b,0)/37);
+  $("#freqLegend").textContent="Esperado por número ≈ "+exp.toFixed(1)+" apariciones (probabilidad 1/37 cada uno)";
+}
+
+/* ===================================================================
+   8. HISTORIAL PAGINADO + EXPORTACIÓN CSV
+   =================================================================== */
+const PAGE=100;
+let curPage=0;
+function renderHistory(page){
+  const r=state.lastSim; if(!r) return;
+  const pages=Math.ceil(r.count/PAGE);
+  curPage=Math.max(0,Math.min(page,pages-1));
+  const start=curPage*PAGE, end=Math.min(start+PAGE,r.count);
+  const tb=$("#historyTbl tbody"); let html="";
+  for(let i=start;i<end;i++){
+    const num=r.numbers[i], net=r.net[num], bal=r.balanceFull[i];
+    const col=colorOf(num);
+    const res = net>0?["win","Ganó"]:(net<0?["lose","Perdió"]:["tie","Empate"]);
+    const sign = net>0?"+":"";
+    html+=`<tr>
+      <td>${i+1}</td>
+      <td>${num}</td>
+      <td><span class="dot ${col}"></span>${colorLabel(num)}</td>
+      <td><span class="tag ${res[0]}">${res[1]}</span></td>
+      <td>${sign}${money(net).replace("S/","")}</td>
+      <td>${money(bal)}</td>
+    </tr>`;
+  }
+  tb.innerHTML=html;
+  $("#pager").innerHTML=
+    `<button class="btn ghost sm" ${curPage===0?"disabled":""} id="prevP">‹ Anterior</button>
+     <span>Página ${curPage+1} de ${pages} · giros ${start+1}–${end} de ${r.count.toLocaleString("es-PE")}</span>
+     <button class="btn ghost sm" ${curPage>=pages-1?"disabled":""} id="nextP">Siguiente ›</button>`;
+  const p=$("#prevP"), nx=$("#nextP");
+  if(p) p.onclick=()=>renderHistory(curPage-1);
+  if(nx) nx.onclick=()=>renderHistory(curPage+1);
+}
+function exportCSV(){
+  const r=state.lastSim; if(!r){ toast("Primero ejecuta una simulación."); return; }
+  const rows=["Giro,Numero,Color,Resultado,NetoGiro,Balance"];
+  for(let i=0;i<r.count;i++){
+    const num=r.numbers[i], net=r.net[num], bal=r.balanceFull[i];
+    const res=net>0?"Gano":(net<0?"Perdio":"Empate");
+    rows.push(`${i+1},${num},${colorLabel(num)},${res},${net.toFixed(2)},${bal.toFixed(2)}`);
+  }
+  const blob=new Blob([rows.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="roprost_historial_"+r.count+"_giros.csv"; a.click();
+  URL.revokeObjectURL(url);
+  toast("CSV exportado ("+r.count.toLocaleString("es-PE")+" giros).");
+}
+
+/* ===================================================================
+   9. GUARDAR / CARGAR ESTRATEGIAS (LocalStorage)
+   =================================================================== */
+function describeStakes(stakes){
+  const ids=Object.keys(stakes).filter(k=>stakes[k]>0);
+  if(!ids.length) return "—";
+  return ids.map(id=>marketLabel(id)+" "+money(stakes[id])).join(" + ");
+}
+function saveCurrent(){
+  if(!hasBets(state.stakes)){ toast("No hay apuestas para guardar."); return; }
+  const name=prompt("Nombre de la estrategia:", "Mi estrategia");
+  if(!name) return;
+  const arr=Store.load();
+  arr.push({id:Date.now(), name:name.trim()||"Estrategia", stakes:JSON.parse(JSON.stringify(state.stakes)), createdAt:new Date().toISOString()});
+  Store.save(arr);
+  renderSaved(); renderChooser();
+  toast("Estrategia guardada ⭐");
+}
+function renderSaved(){
+  const arr=Store.load(); const c=$("#savedList");
+  if(!arr.length){ c.innerHTML='<div class="empty">Aún no hay estrategias guardadas. Crea una en el Simulador y pulsa ⭐ Guardar.</div>'; return; }
+  c.innerHTML="";
+  arr.slice().reverse().forEach(s=>{
+    const card=document.createElement("div"); card.className="saved-card";
+    card.innerHTML=`
+      <div class="nm">⭐ ${escapeHtml(s.name)}</div>
+      <div class="desc">${escapeHtml(describeStakes(s.stakes))}</div>
+      <div class="muted" style="font-family:var(--mono);font-size:11px">Total/giro: ${money(totalStake(s.stakes))}</div>
+      <div class="row">
+        <button class="btn sm" data-load="${s.id}">Cargar</button>
+        <button class="btn ghost sm" data-dup="${s.id}">Analizar</button>
+        <button class="btn danger sm" data-del="${s.id}">Eliminar</button>
+      </div>`;
+    c.appendChild(card);
+  });
+  c.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>loadStrategy(+b.dataset.load,false));
+  c.querySelectorAll("[data-dup]").forEach(b=>b.onclick=()=>loadStrategy(+b.dataset.dup,true));
+  c.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    Store.save(Store.load().filter(x=>x.id!=b.dataset.del));
+    renderSaved(); renderChooser(); toast("Estrategia eliminada.");
+  });
+}
+function loadStrategy(id, gotoIA){
+  const s=Store.load().find(x=>x.id==id); if(!s) return;
+  state.stakes=JSON.parse(JSON.stringify(s.stakes));
+  afterBetChange();
+  if(gotoIA){ switchTab("ia"); }
+  else { switchTab("lab"); $("#table").scrollIntoView({behavior:"smooth"}); }
+  toast("Estrategia cargada: "+s.name);
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ===================================================================
+   10. COMPARADOR
+   =================================================================== */
+function renderChooser(){
+  const arr=Store.load(); const c=$("#cmpChooser");
+  let html='<p class="eyebrow">Selecciona estrategias a comparar</p>';
+  // estrategia actual
+  if(hasBets(state.stakes)){
+    html+=`<div class="check-row"><input type="checkbox" id="cmp_current" checked>
+      <label for="cmp_current"><b style="color:var(--gold-bright)">Estrategia actual</b> — ${escapeHtml(describeStakes(state.stakes))}</label></div>`;
+  }
+  if(!arr.length && !hasBets(state.stakes)){
+    c.innerHTML='<div class="empty">Crea estrategias en el Simulador y guárdalas para compararlas aquí.</div>';
+    return;
+  }
+  arr.forEach(s=>{
+    html+=`<div class="check-row"><input type="checkbox" class="cmpChk" value="${s.id}">
+      <label>⭐ <b>${escapeHtml(s.name)}</b> — ${escapeHtml(describeStakes(s.stakes))}</label></div>`;
+  });
+  c.innerHTML=html;
+}
+function runCompare(){
+  const arr=Store.load();
+  const selected=[];
+  if($("#cmp_current") && $("#cmp_current").checked && hasBets(state.stakes))
+    selected.push({name:"Estrategia actual", stakes:state.stakes});
+  $$(".cmpChk").forEach(chk=>{ if(chk.checked){ const s=arr.find(x=>x.id==chk.value); if(s) selected.push({name:s.name,stakes:s.stakes}); }});
+  if(selected.length<1){ toast("Selecciona al menos una estrategia."); return; }
+
+  const count=parseInt($("#cmpCount").value,10);
+  const bankroll=parseFloat($("#bankroll").value)||1000;
+  // misma secuencia de giros para todas
+  const shared=new Uint8Array(count);
+  for(let i=0;i<count;i++) shared[i]=(Math.random()*37)|0;
+
+  const results=selected.map(s=>{
+    const r=simulate(s.stakes,bankroll,count,shared);
+    return {name:s.name, stakes:s.stakes, r};
+  });
+
+  // mejor por beneficio neto (mismo nº de giros y banca)
+  let best=results[0];
+  results.forEach(x=>{ if(x.r.netProfit>best.r.netProfit) best=x; });
+
+  let html=`<div class="tbl-wrap" style="margin-top:16px"><table class="data">
+    <thead><tr><th>Estrategia</th><th>% Éxito</th><th>Ganancia bruta</th><th>Pérdida bruta</th>
+    <th>Beneficio neto</th><th>ROI</th><th>Balance final</th></tr></thead><tbody>`;
+  results.forEach(x=>{
+    const isBest = x===best;
+    const npc = x.r.netProfit>0?"pos":(x.r.netProfit<0?"lose":"tie");
+    html+=`<tr>
+      <td>${isBest?'<span class="crown">🏆 </span>':''}${escapeHtml(x.name)}</td>
+      <td>${pct(x.r.winRate)}</td>
+      <td style="color:var(--win)">${money(x.r.grossWin)}</td>
+      <td style="color:var(--lose)">${money(x.r.grossLoss)}</td>
+      <td><span class="tag ${npc==='pos'?'win':(npc==='lose'?'lose':'tie')}">${money(x.r.netProfit)}</span></td>
+      <td>${(x.r.roi*100).toFixed(2)}%</td>
+      <td>${money(x.r.balanceEnd)}</td>
+    </tr>`;
+  });
+  html+="</tbody></table></div>";
+
+  // veredicto
+  const ev=-1/37; // ventaja teórica por unidad
+  html+=`<div class="ia-comment" style="margin-top:16px"><span class="who">Veredicto del comparador</span>
+    Con <b>${count.toLocaleString("es-PE")}</b> giros idénticos para todas, la mejor fue
+    <b class="crown">🏆 ${escapeHtml(best.name)}</b> con un beneficio neto de <b>${money(best.r.netProfit)}</b>
+    (ROI ${(best.r.roi*100).toFixed(2)}%).
+    Recuerda: este resultado depende del azar de esta tanda. La esperanza matemática de cualquier
+    apuesta en ruleta europea es de <b>${(ev*100).toFixed(2)}%</b> por unidad apostada — el casino siempre
+    conserva la ventaja a largo plazo. Vuelve a comparar para ver cómo cambia el "ganador".</div>`;
+
+  $("#cmpResult").innerHTML=html;
+}
+
+/* ===================================================================
+   11. ANALIZADOR IA (basado en reglas y probabilidad real)
+   =================================================================== */
+function analyze(stakes){
+  const ids=Object.keys(stakes).filter(k=>stakes[k]>0);
+  const {net, stake}=buildLookup(stakes);
+  // cobertura: números donde gana al menos una apuesta
+  let covered=0;
+  for(let n=0;n<=36;n++){ if(ids.some(id=>marketWin(id,n))){ covered++; } }
+  const covFrac=covered/37;
+  // esperanza matemática por giro = media de net sobre 37 números
+  let sum=0; for(let n=0;n<=36;n++) sum+=net[n];
+  const evPerSpin=sum/37;
+  const evPct = stake>0 ? evPerSpin/stake : 0;     // ≈ -0.0270 para ruleta europea
+  // exposición a números exactos (alta varianza)
+  let straightStake=0; ids.forEach(id=>{ if(isStraight(id)) straightStake+=stakes[id]; });
+  const straightFrac = stake>0 ? straightStake/stake : 0;
+  // pérdida y ganancia extremas en un giro
+  let maxWin=-Infinity,maxLoss=Infinity;
+  for(let n=0;n<=36;n++){ if(net[n]>maxWin)maxWin=net[n]; if(net[n]<maxLoss)maxLoss=net[n]; }
+  // nivel de riesgo
+  let risk;
+  if(straightFrac>0.5 || covFrac<0.30) risk="Alto";
+  else if(covFrac>=0.62 && straightFrac<0.25) risk="Bajo";
+  else risk="Medio";
+  return {ids, stake, covered, covFrac, evPct, straightFrac, maxWin, maxLoss, risk};
+}
+function riskClass(r){ return r==="Bajo"?"risk-bajo":(r==="Alto"?"risk-alto":"risk-medio"); }
+
+function renderIA(){
+  const gauge=$("#iaGauge"), comment=$("#iaComment"), bar=$("#covBar");
+  if(!hasBets(state.stakes)){
+    gauge.innerHTML=`<div class="g"><div class="lbl">Riesgo</div><div class="big">—</div></div>
+      <div class="g"><div class="lbl">Ventaja del casino</div><div class="big">—</div></div>
+      <div class="g"><div class="lbl">Cobertura</div><div class="big">—</div></div>`;
+    bar.style.width="0%";
+    comment.innerHTML='<span class="who">Análisis IA</span>Configura una estrategia en el Simulador para analizarla.';
+    return;
+  }
+  const a=analyze(state.stakes);
+  gauge.innerHTML=
+    `<div class="g"><div class="lbl">Nivel de riesgo</div><div class="big ${riskClass(a.risk)}">${a.risk}</div></div>
+     <div class="g"><div class="lbl">Ventaja del casino (esperada)</div><div class="big risk-alto">${(-a.evPct*100).toFixed(2)}%</div></div>
+     <div class="g"><div class="lbl">Cobertura de números</div><div class="big" style="color:var(--gold-bright)">${a.covered}/37</div></div>`;
+  bar.style.width=(a.covFrac*100).toFixed(1)+"%";
+
+  // comentario contextual
+  let parts=[];
+  parts.push(`Cubres <b>${a.covered} de 37</b> números (<b>${pct(a.covFrac)}</b>) con un total de ${money(a.stake)} por giro.`);
+  if(a.straightFrac>0.5){
+    parts.push(`Apuestas fuertemente a números exactos (pago 35:1): es una estrategia de <b>alta volatilidad</b> — muchas pérdidas pequeñas a cambio de premios grandes y poco frecuentes.`);
+  } else if(a.covFrac>=0.7){
+    parts.push(`La amplia cobertura reduce la frecuencia de pérdidas totales, pero también reduce el premio por acierto: el balance tiende a moverse despacio.`);
+  } else if(a.covFrac>=0.45){
+    parts.push(`Cobertura intermedia: equilibrio entre frecuencia de aciertos y tamaño del premio.`);
+  } else {
+    parts.push(`Cobertura baja: ganarás menos a menudo, pero cada acierto paga más.`);
+  }
+  // detección de coberturas opuestas (p.ej. Rojo+Negro)
+  const ids=a.ids;
+  const opp = (ids.includes("red")&&ids.includes("black")) ||
+              (ids.includes("even")&&ids.includes("odd")) ||
+              (ids.includes("low")&&ids.includes("high"));
+  if(opp){
+    parts.push(`Apuestas a dos lados opuestos: cuando uno gana, el otro pierde y el resultado neto suele ser <b>empate</b>… salvo cuando sale el <b>0</b>, donde pierdes ambas. Ahí se manifiesta directamente la ventaja del casino.`);
+  }
+  parts.push(`Esperanza matemática: <b>${(a.evPct*100).toFixed(2)}%</b> por unidad apostada. En ruleta europea esto es ≈ −2.70% para <i>cualquier</i> combinación: el <b>0</b> mantiene la ventaja del casino a largo plazo, sin importar la estrategia.`);
+
+  comment.innerHTML='<span class="who">Análisis IA</span>'+parts.join(" ");
+}
+
+/* ===================================================================
+   12. NAVEGACIÓN DE PESTAÑAS
+   =================================================================== */
+function switchTab(name){
+  $$("nav.tabs button").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  $$(".tabview").forEach(v=>v.classList.toggle("active", v.id===name));
+  if(name==="saved") renderSaved();
+  if(name==="compare") renderChooser();
+  if(name==="ia") renderIA();
+  // redibujar gráficos al volver al simulador (por cambios de tamaño)
+  if(name==="lab" && state.lastSim){
+    const r=state.lastSim;
+    drawBalance($("#cBalance"), r.balSamples, r.bankrollStart);
+    drawDistribution($("#cDist"), r.won, r.tied, r.lost);
+    drawFrequency($("#cFreq"), r.freq);
+  }
+}
+
+/* ===================================================================
+   13. ARRANQUE
+   =================================================================== */
+function init(){
+  buildChips();
+  buildTable();
+  buildSimButtons();
+  renderBetSummary();
+  renderIA();
+  renderSaved();
+  renderChooser();
+
+  $$("nav.tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+  $("#clearBets").onclick=()=>{ state.stakes={}; afterBetChange(); toast("Apuestas limpiadas."); };
+  $("#saveBtn").onclick=saveCurrent;
+  $("#exportBtn").onclick=exportCSV;
+  $("#runCompare").onclick=runCompare;
+
+  // redibujar gráficos al cambiar tamaño de ventana
+  let rt; window.addEventListener("resize",()=>{
+    clearTimeout(rt); rt=setTimeout(()=>{
+      if(state.lastSim && $("#lab").classList.contains("active")){
+        const r=state.lastSim;
+        drawBalance($("#cBalance"), r.balSamples, r.bankrollStart);
+        drawDistribution($("#cDist"), r.won, r.tied, r.lost);
+        drawFrequency($("#cFreq"), r.freq);
+      }
+    },180);
+  });
+}
+init();
+</script>
+</body>
+</html>
